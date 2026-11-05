@@ -1,0 +1,22 @@
+# A Go module is published by its tag; this checks the tag and has the module proxy (and so pkg.go.dev) fetch it.
+name: release
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - run: go vet ./...
+      - run: go test -count=1 ./...
+      - name: Ask the module proxy for this version
+        run: |
+          module=$(go list -m)
+          cd "$(mktemp -d)"
+          GOPROXY=https://proxy.golang.org GO111MODULE=on go list -m "$module@$GITHUB_REF_NAME"
