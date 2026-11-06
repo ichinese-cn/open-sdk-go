@@ -3,7 +3,7 @@
 package opensdk
 
 // Version is the SDK's version (it follows the open API's).
-const Version = "1.0.0-rc.2"
+const Version = "1.0.0-rc.3"
 
 // DefaultBaseURL is the open API's address from the release configuration (sdks/release.json);
 // WithBaseURL overrides it.
@@ -37,11 +37,21 @@ var Scopes = []string{
 	"job:candidate:readonly",
 	"trial",
 	"trade:order:readonly",
+	"trade:booking:readonly",
+	"venue:readonly",
+	"venue",
+	"opening:readonly",
 	"review",
 	"profile:interest:readonly",
 	"profile:interest",
 	"profile:learning:readonly",
 	"report:create",
+	"community:post",
+	"me:schedule:readonly",
+	"me:learning:readonly",
+	"me:words:readonly",
+	"me:words",
+	"insights:readonly",
 }
 
 // EventTypes lists the events an app can subscribe to.
@@ -58,6 +68,17 @@ var EventTypes = []string{
 	"review.created",
 	"trial.booked",
 	"im.message_received",
+	"class.member_changed",
+	"course.completed",
+	"exam.results_released",
+	"event.checked_in",
+	"live.recording_ready",
+	"trade.order_refunded",
+	"trial.confirmed",
+	"trial.cancelled",
+	"community.post_reviewed",
+	"community.video_ready",
+	"booking.changed",
 }
 
 // ErrorReasons lists the values of error.details.reason (see Error.Reason).
@@ -81,6 +102,29 @@ var ErrorReasons = []string{
 	"redirect_uri_mismatch",
 	"origin_not_trusted",
 	"ip_not_allowed",
+	"org_not_installed",
+	"minor_not_allowed",
+	"birth_year_required",
+	"feature_disabled",
+	"app_post_stopped",
+	"consent_required",
+	"video_not_ready",
+	"video_failed",
+	"post_rate_limited",
+	"app_user_daily_limit",
+	"post_in_progress",
+	"no_org_account",
+	"teacher_busy",
+	"online_only",
+	"venue_unavailable",
+	"venue_not_found",
+	"slot_overlap",
+	"slot_taken",
+	"not_draft",
+	"not_editable",
+	"org_not_verified",
+	"opening_ended",
+	"opening_incomplete",
 }
 
 // OperationTokens maps each operation (by its contract id) to the token types it accepts; the client
@@ -97,6 +141,8 @@ var OperationTokens = func() map[string][]TokenType {
 	m["addClassMember"] = []TokenType{TokenTenant, TokenUser}
 	m["removeClassMember"] = []TokenType{TokenTenant, TokenUser}
 	m["listClassSessions"] = []TokenType{TokenTenant, TokenUser}
+	m["createClassSessions"] = []TokenType{TokenTenant, TokenUser}
+	m["setClassSessionPlace"] = []TokenType{TokenTenant, TokenUser}
 	m["cancelClassSession"] = []TokenType{TokenTenant, TokenUser}
 	m["rescheduleClassSession"] = []TokenType{TokenTenant, TokenUser}
 	m["getSessionAttendance"] = []TokenType{TokenTenant, TokenUser}
@@ -124,9 +170,18 @@ var OperationTokens = func() map[string][]TokenType {
 	m["listTrialSlots"] = []TokenType{TokenTenant}
 	m["createTrialSlots"] = []TokenType{TokenTenant}
 	m["cancelTrialSlot"] = []TokenType{TokenTenant}
+	m["setTrialTeacher"] = []TokenType{TokenTenant}
 	m["listTrialBookings"] = []TokenType{TokenTenant}
 	m["confirmTrialBooking"] = []TokenType{TokenTenant}
+	m["listVenues"] = []TokenType{TokenTenant}
+	m["createVenue"] = []TokenType{TokenTenant}
+	m["getVenue"] = []TokenType{TokenTenant}
+	m["listOpenings"] = []TokenType{TokenTenant, TokenUser}
+	m["getOpening"] = []TokenType{TokenTenant, TokenUser}
+	m["getInsights"] = []TokenType{TokenTenant}
 	m["listTradeOrders"] = []TokenType{TokenTenant}
+	m["listBookings"] = []TokenType{TokenTenant}
+	m["getBooking"] = []TokenType{TokenTenant}
 	m["listTenantReviews"] = []TokenType{TokenTenant}
 	m["replyReview"] = []TokenType{TokenTenant}
 	m["listPublicContent"] = []TokenType{TokenApp, TokenTenant, TokenUser}
@@ -134,6 +189,21 @@ var OperationTokens = func() map[string][]TokenType {
 	m["addInterestSignal"] = []TokenType{TokenUser}
 	m["getUserLearningProfile"] = []TokenType{TokenUser}
 	m["reportOnBehalf"] = []TokenType{TokenUser}
+	m["createCommunityImageUpload"] = []TokenType{TokenUser, TokenTenant}
+	m["createCommunityVideoUpload"] = []TokenType{TokenUser, TokenTenant}
+	m["completeCommunityVideoUpload"] = []TokenType{TokenUser, TokenTenant}
+	m["getCommunityVideo"] = []TokenType{TokenUser, TokenTenant}
+	m["listCommunityPosts"] = []TokenType{TokenUser, TokenTenant}
+	m["createCommunityPost"] = []TokenType{TokenUser, TokenTenant}
+	m["getCommunityPost"] = []TokenType{TokenUser, TokenTenant}
+	m["deleteCommunityPost"] = []TokenType{TokenUser, TokenTenant}
+	m["listCommunityCategories"] = []TokenType{TokenUser, TokenTenant}
+	m["getMySchedule"] = []TokenType{TokenUser}
+	m["listMyCourses"] = []TokenType{TokenUser}
+	m["listMyWords"] = []TokenType{TokenUser}
+	m["addMyWord"] = []TokenType{TokenUser}
+	m["listClassExams"] = []TokenType{TokenTenant}
+	m["listClassExamResults"] = []TokenType{TokenTenant}
 	return m
 }()
 
@@ -206,6 +276,18 @@ const ScopeTrial = "trial"
 // ScopeTradeOrderReadonly is the scope trade:order:readonly.
 const ScopeTradeOrderReadonly = "trade:order:readonly"
 
+// ScopeTradeBookingReadonly is the scope trade:booking:readonly.
+const ScopeTradeBookingReadonly = "trade:booking:readonly"
+
+// ScopeVenueReadonly is the scope venue:readonly.
+const ScopeVenueReadonly = "venue:readonly"
+
+// ScopeVenue is the scope venue.
+const ScopeVenue = "venue"
+
+// ScopeOpeningReadonly is the scope opening:readonly.
+const ScopeOpeningReadonly = "opening:readonly"
+
 // ScopeReview is the scope review.
 const ScopeReview = "review"
 
@@ -220,6 +302,24 @@ const ScopeProfileLearningReadonly = "profile:learning:readonly"
 
 // ScopeReportCreate is the scope report:create.
 const ScopeReportCreate = "report:create"
+
+// ScopeCommunityPost is the scope community:post.
+const ScopeCommunityPost = "community:post"
+
+// ScopeMeScheduleReadonly is the scope me:schedule:readonly.
+const ScopeMeScheduleReadonly = "me:schedule:readonly"
+
+// ScopeMeLearningReadonly is the scope me:learning:readonly.
+const ScopeMeLearningReadonly = "me:learning:readonly"
+
+// ScopeMeWordsReadonly is the scope me:words:readonly.
+const ScopeMeWordsReadonly = "me:words:readonly"
+
+// ScopeMeWords is the scope me:words.
+const ScopeMeWords = "me:words"
+
+// ScopeInsightsReadonly is the scope insights:readonly.
+const ScopeInsightsReadonly = "insights:readonly"
 
 // EventAppInstalled is the event app.installed: An institution or user installed the app (institution installs carry tenant_key)
 const EventAppInstalled = "app.installed"
@@ -236,7 +336,7 @@ const EventCourseworkSubmitted = "coursework.submitted"
 // EventGradePublished is the event grade.published: Grades were published
 const EventGradePublished = "grade.published"
 
-// EventScheduleSessionChanged is the event schedule.session_changed: A class session was rescheduled, cancelled or newly scheduled
+// EventScheduleSessionChanged is the event schedule.session_changed: A class session was newly scheduled, rescheduled, cancelled or moved to another place. Fields: `class_id`, `session_ids`, `change` (scheduled / rescheduled / cancelled / place_changed)
 const EventScheduleSessionChanged = "schedule.session_changed"
 
 // EventEventRegistered is the event event.registered: Someone registered for an event
@@ -256,6 +356,39 @@ const EventTrialBooked = "trial.booked"
 
 // EventImMessageReceived is the event im.message_received: Someone @-mentioned the bot in a group chat it is in (not in confidential conversations). Fields: `chat_id`, `message_id`, `seq`, `chat_type` (class / group), `sender_open_id`, `text` (the message's plain text), `mentioned: true`. In a class group `tenant_key` is the class's institution; in other groups it is null.
 const EventImMessageReceived = "im.message_received"
+
+// EventClassMemberChanged is the event class.member_changed: A class's members changed. Fields: `class_id`, `open_id`, `role` (student / teacher / assistant), `change` (added / removed)
+const EventClassMemberChanged = "class.member_changed"
+
+// EventCourseCompleted is the event course.completed: A learner completed a course (only learners in the course's region). Fields: `course_id`, `open_id`
+const EventCourseCompleted = "course.completed"
+
+// EventExamResultsReleased is the event exam.results_released: An exam's results were released. Fields: `class_id`, `exam_id`; fetch the results through the API
+const EventExamResultsReleased = "exam.results_released"
+
+// EventEventCheckedIn is the event event.checked_in: Someone checked in at an event. Fields: `event_id`, `open_id`
+const EventEventCheckedIn = "event.checked_in"
+
+// EventLiveRecordingReady is the event live.recording_ready: A session's replay can be watched. Fields: `class_id`, `session_id`
+const EventLiveRecordingReady = "live.recording_ready"
+
+// EventTradeOrderRefunded is the event trade.order_refunded: An order was refunded. Fields: `order_id`
+const EventTradeOrderRefunded = "trade.order_refunded"
+
+// EventTrialConfirmed is the event trial.confirmed: A trial lesson was confirmed. Fields: `booking_id`, `venue_id`, `open_id`
+const EventTrialConfirmed = "trial.confirmed"
+
+// EventTrialCancelled is the event trial.cancelled: A trial lesson was cancelled (by the learner or the institution). Fields: `booking_id`, `venue_id`, `open_id`
+const EventTrialCancelled = "trial.cancelled"
+
+// EventCommunityPostReviewed is the event community.post_reviewed: A post this app made has a moderation result; pushed to this app only. Fields: `post_id`, `open_id`, `result` (approved / rejected / removed); when rejected, `reason` (the category of the reason; the matched words are not given). Posts of the institution's account (made with a tenant token) carry `tenant_key` and no `open_id`.
+const EventCommunityPostReviewed = "community.post_reviewed"
+
+// EventCommunityVideoReady is the event community.video_ready: A video this app uploaded finished transcoding; pushed to this app only. Fields: `asset_id`, `open_id`, `status` (ready / failed). Videos uploaded with a tenant token (for the institution's account) carry `tenant_key` and no `open_id`.
+const EventCommunityVideoReady = "community.video_ready"
+
+// EventBookingChanged is the event booking.changed: A booking changed: newly booked, confirmed, declined, moved, cancelled or held. Fields: `booking_id`, `kind` (one_on_one / trial), `status`, `open_id` (the learner); fetch the details with `GET /bookings/{booking_id}`.
+const EventBookingChanged = "booking.changed"
 
 // ReasonInvalidCredentials is the error reason invalid_credentials.
 const ReasonInvalidCredentials = "invalid_credentials"
@@ -313,3 +446,72 @@ const ReasonOriginNotTrusted = "origin_not_trusted"
 
 // ReasonIpNotAllowed is the error reason ip_not_allowed.
 const ReasonIpNotAllowed = "ip_not_allowed"
+
+// ReasonOrgNotInstalled is the error reason org_not_installed.
+const ReasonOrgNotInstalled = "org_not_installed"
+
+// ReasonMinorNotAllowed is the error reason minor_not_allowed.
+const ReasonMinorNotAllowed = "minor_not_allowed"
+
+// ReasonBirthYearRequired is the error reason birth_year_required.
+const ReasonBirthYearRequired = "birth_year_required"
+
+// ReasonFeatureDisabled is the error reason feature_disabled.
+const ReasonFeatureDisabled = "feature_disabled"
+
+// ReasonAppPostStopped is the error reason app_post_stopped.
+const ReasonAppPostStopped = "app_post_stopped"
+
+// ReasonConsentRequired is the error reason consent_required.
+const ReasonConsentRequired = "consent_required"
+
+// ReasonVideoNotReady is the error reason video_not_ready.
+const ReasonVideoNotReady = "video_not_ready"
+
+// ReasonVideoFailed is the error reason video_failed.
+const ReasonVideoFailed = "video_failed"
+
+// ReasonPostRateLimited is the error reason post_rate_limited.
+const ReasonPostRateLimited = "post_rate_limited"
+
+// ReasonAppUserDailyLimit is the error reason app_user_daily_limit.
+const ReasonAppUserDailyLimit = "app_user_daily_limit"
+
+// ReasonPostInProgress is the error reason post_in_progress.
+const ReasonPostInProgress = "post_in_progress"
+
+// ReasonNoOrgAccount is the error reason no_org_account.
+const ReasonNoOrgAccount = "no_org_account"
+
+// ReasonTeacherBusy is the error reason teacher_busy.
+const ReasonTeacherBusy = "teacher_busy"
+
+// ReasonOnlineOnly is the error reason online_only.
+const ReasonOnlineOnly = "online_only"
+
+// ReasonVenueUnavailable is the error reason venue_unavailable.
+const ReasonVenueUnavailable = "venue_unavailable"
+
+// ReasonVenueNotFound is the error reason venue_not_found.
+const ReasonVenueNotFound = "venue_not_found"
+
+// ReasonSlotOverlap is the error reason slot_overlap.
+const ReasonSlotOverlap = "slot_overlap"
+
+// ReasonSlotTaken is the error reason slot_taken.
+const ReasonSlotTaken = "slot_taken"
+
+// ReasonNotDraft is the error reason not_draft.
+const ReasonNotDraft = "not_draft"
+
+// ReasonNotEditable is the error reason not_editable.
+const ReasonNotEditable = "not_editable"
+
+// ReasonOrgNotVerified is the error reason org_not_verified.
+const ReasonOrgNotVerified = "org_not_verified"
+
+// ReasonOpeningEnded is the error reason opening_ended.
+const ReasonOpeningEnded = "opening_ended"
+
+// ReasonOpeningIncomplete is the error reason opening_incomplete.
+const ReasonOpeningIncomplete = "opening_incomplete"

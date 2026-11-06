@@ -101,6 +101,20 @@ func (c *Client) ListClassSessionsAll(ctx context.Context, classID string, query
 	return c.iterate(ctx, &callSpec{id: "listClassSessions", method: "GET", path: "/classes/{class_id}/sessions", pathParams: map[string]string{"class_id": classID}, query: query, tokenTypes: []TokenType{TokenTenant, TokenUser}}, opts)
 }
 
+// CreateClassSessions calls POST /classes/{class_id}/sessions: Schedule a class's sessions (once, or repeating weekly), online or at one of the institution's teaching sites
+//
+// Tokens: tenant / user; scopes: schedule.
+func (c *Client) CreateClassSessions(ctx context.Context, classID string, body any, opts ...CallOption) (Object, error) {
+	return c.call(ctx, &callSpec{id: "createClassSessions", method: "POST", path: "/classes/{class_id}/sessions", pathParams: map[string]string{"class_id": classID}, body: body, tokenTypes: []TokenType{TokenTenant, TokenUser}}, opts)
+}
+
+// SetClassSessionPlace calls PUT /classes/{class_id}/sessions/{session_id}/place: Change where one session (or this one and the later ones of its series) is held
+//
+// Tokens: tenant / user; scopes: schedule.
+func (c *Client) SetClassSessionPlace(ctx context.Context, classID string, sessionID string, body any, opts ...CallOption) (Object, error) {
+	return c.call(ctx, &callSpec{id: "setClassSessionPlace", method: "PUT", path: "/classes/{class_id}/sessions/{session_id}/place", pathParams: map[string]string{"class_id": classID, "session_id": sessionID}, body: body, tokenTypes: []TokenType{TokenTenant, TokenUser}}, opts)
+}
+
 // CancelClassSession calls POST /classes/{class_id}/sessions/{session_id}/cancel: Cancel a class session (members are notified, the same as cancelling in the timetable)
 //
 // Tokens: tenant / user; scopes: schedule.
@@ -341,10 +355,10 @@ func (c *Client) ListTrialVenuesAll(ctx context.Context, query Params, opts ...C
 	return c.iterate(ctx, &callSpec{id: "listTrialVenues", method: "GET", path: "/trial/venues", query: query, tokenTypes: []TokenType{TokenTenant}}, opts)
 }
 
-// ListTrialSlots calls GET /trial/slots: Trial lesson slots (by default only those not over yet, by time)
+// ListTrialSlots calls GET /trial/slots: Trial times (a trial lesson's own times at teaching sites; by default only those not over yet, by time)
 //
 // Tokens: tenant; scopes: trial.
-// Query: venue_id, include_past, page_size, page_token.
+// Query: venue_id, opening_id, include_past, page_size, page_token.
 func (c *Client) ListTrialSlots(ctx context.Context, query Params, opts ...CallOption) (Object, error) {
 	return c.call(ctx, &callSpec{id: "listTrialSlots", method: "GET", path: "/trial/slots", query: query, tokenTypes: []TokenType{TokenTenant}}, opts)
 }
@@ -354,18 +368,25 @@ func (c *Client) ListTrialSlotsAll(ctx context.Context, query Params, opts ...Ca
 	return c.iterate(ctx, &callSpec{id: "listTrialSlots", method: "GET", path: "/trial/slots", query: query, tokenTypes: []TokenType{TokenTenant}}, opts)
 }
 
-// CreateTrialSlots calls POST /trial/slots: Schedule trial lesson slots (they can repeat weekly); the teaching site must be published
+// CreateTrialSlots calls POST /trial/slots: Open trial times (they can repeat weekly): add them to an existing trial lesson, or open a new trial draft
 //
 // Tokens: tenant; scopes: trial.
 func (c *Client) CreateTrialSlots(ctx context.Context, body any, opts ...CallOption) (Object, error) {
 	return c.call(ctx, &callSpec{id: "createTrialSlots", method: "POST", path: "/trial/slots", body: body, tokenTypes: []TokenType{TokenTenant}}, opts)
 }
 
-// CancelTrialSlot calls POST /trial/slots/{slot_id}/cancel: Cancel a trial lesson slot (whoever booked it is notified as usual; the booking is cancelled with it)
+// CancelTrialSlot calls POST /trial/slots/{slot_id}/cancel: Close a trial time (no more bookings; bookings already made stay as they are, and nobody is notified)
 //
 // Tokens: tenant; scopes: trial.
 func (c *Client) CancelTrialSlot(ctx context.Context, slotID string, body any, opts ...CallOption) (Object, error) {
 	return c.call(ctx, &callSpec{id: "cancelTrialSlot", method: "POST", path: "/trial/slots/{slot_id}/cancel", pathParams: map[string]string{"slot_id": slotID}, body: body, tokenTypes: []TokenType{TokenTenant}}, opts)
+}
+
+// SetTrialTeacher calls PUT /trial/openings/{opening_id}/teacher: Fill in (or change) the teacher of a trial draft
+//
+// Tokens: tenant; scopes: trial.
+func (c *Client) SetTrialTeacher(ctx context.Context, openingID string, body any, opts ...CallOption) (Object, error) {
+	return c.call(ctx, &callSpec{id: "setTrialTeacher", method: "PUT", path: "/trial/openings/{opening_id}/teacher", pathParams: map[string]string{"opening_id": openingID}, body: body, tokenTypes: []TokenType{TokenTenant}}, opts)
 }
 
 // ListTrialBookings calls GET /trial/bookings: Trial lesson bookings at the institution's teaching sites
@@ -388,6 +409,61 @@ func (c *Client) ConfirmTrialBooking(ctx context.Context, bookingID string, opts
 	return c.call(ctx, &callSpec{id: "confirmTrialBooking", method: "POST", path: "/trial/bookings/{booking_id}/confirm", pathParams: map[string]string{"booking_id": bookingID}, tokenTypes: []TokenType{TokenTenant}}, opts)
 }
 
+// ListVenues calls GET /venues: The institution's teaching sites (campuses), newest first
+//
+// Tokens: tenant; scopes: venue:readonly, venue, trial.
+// Query: status, page_size, page_token.
+func (c *Client) ListVenues(ctx context.Context, query Params, opts ...CallOption) (Object, error) {
+	return c.call(ctx, &callSpec{id: "listVenues", method: "GET", path: "/venues", query: query, tokenTypes: []TokenType{TokenTenant}}, opts)
+}
+
+// ListVenuesAll yields every item of ListVenues, page after page (page_size 100 unless query sets it).
+func (c *Client) ListVenuesAll(ctx context.Context, query Params, opts ...CallOption) iter.Seq2[Object, error] {
+	return c.iterate(ctx, &callSpec{id: "listVenues", method: "GET", path: "/venues", query: query, tokenTypes: []TokenType{TokenTenant}}, opts)
+}
+
+// CreateVenue calls POST /venues: Create a draft teaching site (campus); it is published in the platform and reviewed as usual
+//
+// Tokens: tenant; scopes: venue.
+func (c *Client) CreateVenue(ctx context.Context, body any, opts ...CallOption) (Object, error) {
+	return c.call(ctx, &callSpec{id: "createVenue", method: "POST", path: "/venues", body: body, tokenTypes: []TokenType{TokenTenant}}, opts)
+}
+
+// GetVenue calls GET /venues/{venue_id}: One teaching site (of this institution only)
+//
+// Tokens: tenant; scopes: venue:readonly, venue, trial.
+func (c *Client) GetVenue(ctx context.Context, venueID string, opts ...CallOption) (Object, error) {
+	return c.call(ctx, &callSpec{id: "getVenue", method: "GET", path: "/venues/{venue_id}", pathParams: map[string]string{"venue_id": venueID}, tokenTypes: []TokenType{TokenTenant}}, opts)
+}
+
+// ListOpenings calls GET /openings: Openings: every class and course opened (group classes, one-to-ones, open classes, trial lessons, video courses), newest first
+//
+// Tokens: tenant / user; scopes: opening:readonly.
+// Query: status, kind, course_id, page_size, page_token.
+func (c *Client) ListOpenings(ctx context.Context, query Params, opts ...CallOption) (Object, error) {
+	return c.call(ctx, &callSpec{id: "listOpenings", method: "GET", path: "/openings", query: query, tokenTypes: []TokenType{TokenTenant, TokenUser}}, opts)
+}
+
+// ListOpeningsAll yields every item of ListOpenings, page after page (page_size 100 unless query sets it).
+func (c *Client) ListOpeningsAll(ctx context.Context, query Params, opts ...CallOption) iter.Seq2[Object, error] {
+	return c.iterate(ctx, &callSpec{id: "listOpenings", method: "GET", path: "/openings", query: query, tokenTypes: []TokenType{TokenTenant, TokenUser}}, opts)
+}
+
+// GetOpening calls GET /openings/{opening_id}: One opening
+//
+// Tokens: tenant / user; scopes: opening:readonly.
+func (c *Client) GetOpening(ctx context.Context, openingID string, opts ...CallOption) (Object, error) {
+	return c.call(ctx, &callSpec{id: "getOpening", method: "GET", path: "/openings/{opening_id}", pathParams: map[string]string{"opening_id": openingID}, tokenTypes: []TokenType{TokenTenant, TokenUser}}, opts)
+}
+
+// GetInsights calls GET /insights: One page of the institution's dashboard (read only): enrolment, teaching, teaching sites, income, community and events
+//
+// Tokens: tenant; scopes: insights:readonly.
+// Query: tab, range, from, to, compare, venue_id, course_id, currency.
+func (c *Client) GetInsights(ctx context.Context, query Params, opts ...CallOption) (Object, error) {
+	return c.call(ctx, &callSpec{id: "getInsights", method: "GET", path: "/insights", query: query, tokenTypes: []TokenType{TokenTenant}}, opts)
+}
+
 // ListTradeOrders calls GET /trade/orders: The institution's orders (read-only, for reconciliation). Write operations involving money are not open
 //
 // Tokens: tenant; scopes: trade:order:readonly.
@@ -399,6 +475,26 @@ func (c *Client) ListTradeOrders(ctx context.Context, query Params, opts ...Call
 // ListTradeOrdersAll yields every item of ListTradeOrders, page after page (page_size 100 unless query sets it).
 func (c *Client) ListTradeOrdersAll(ctx context.Context, query Params, opts ...CallOption) iter.Seq2[Object, error] {
 	return c.iterate(ctx, &callSpec{id: "listTradeOrders", method: "GET", path: "/trade/orders", query: query, tokenTypes: []TokenType{TokenTenant}}, opts)
+}
+
+// ListBookings calls GET /bookings: The institution's bookings (one-to-ones and trial lessons, read only for reconciliation), latest lesson first
+//
+// Tokens: tenant; scopes: trade:booking:readonly.
+// Query: status, kind, opening_id, from, to, page_size, page_token.
+func (c *Client) ListBookings(ctx context.Context, query Params, opts ...CallOption) (Object, error) {
+	return c.call(ctx, &callSpec{id: "listBookings", method: "GET", path: "/bookings", query: query, tokenTypes: []TokenType{TokenTenant}}, opts)
+}
+
+// ListBookingsAll yields every item of ListBookings, page after page (page_size 100 unless query sets it).
+func (c *Client) ListBookingsAll(ctx context.Context, query Params, opts ...CallOption) iter.Seq2[Object, error] {
+	return c.iterate(ctx, &callSpec{id: "listBookings", method: "GET", path: "/bookings", query: query, tokenTypes: []TokenType{TokenTenant}}, opts)
+}
+
+// GetBooking calls GET /bookings/{booking_id}: One booked lesson
+//
+// Tokens: tenant; scopes: trade:booking:readonly.
+func (c *Client) GetBooking(ctx context.Context, bookingID string, opts ...CallOption) (Object, error) {
+	return c.call(ctx, &callSpec{id: "getBooking", method: "GET", path: "/bookings/{booking_id}", pathParams: map[string]string{"booking_id": bookingID}, tokenTypes: []TokenType{TokenTenant}}, opts)
 }
 
 // ListTenantReviews calls GET /reviews: Reviews of this institution (and its courses and teaching sites)
@@ -460,4 +556,145 @@ func (c *Client) GetUserLearningProfile(ctx context.Context, opts ...CallOption)
 // Tokens: user; scopes: report:create.
 func (c *Client) ReportOnBehalf(ctx context.Context, body any, opts ...CallOption) (Object, error) {
 	return c.call(ctx, &callSpec{id: "reportOnBehalf", method: "POST", path: "/reports", body: body, tokenTypes: []TokenType{TokenUser}}, opts)
+}
+
+// CreateCommunityImageUpload calls POST /community/images: Get an upload URL for an image (it is re-encoded and its EXIF removed when the post is made)
+//
+// Tokens: user / tenant; scopes: community:post.
+func (c *Client) CreateCommunityImageUpload(ctx context.Context, body any, opts ...CallOption) (Object, error) {
+	return c.call(ctx, &callSpec{id: "createCommunityImageUpload", method: "POST", path: "/community/images", body: body, tokenTypes: []TokenType{TokenUser, TokenTenant}}, opts)
+}
+
+// CreateCommunityVideoUpload calls POST /community/videos: Get an upload URL for a video (up to 4 GB, 1 hour)
+//
+// Tokens: user / tenant; scopes: community:post.
+func (c *Client) CreateCommunityVideoUpload(ctx context.Context, body any, opts ...CallOption) (Object, error) {
+	return c.call(ctx, &callSpec{id: "createCommunityVideoUpload", method: "POST", path: "/community/videos", body: body, tokenTypes: []TokenType{TokenUser, TokenTenant}}, opts)
+}
+
+// CompleteCommunityVideoUpload calls POST /community/videos/{asset_id}/complete: The upload is done; start transcoding (calling it again has no side effects)
+//
+// Tokens: user / tenant; scopes: community:post.
+func (c *Client) CompleteCommunityVideoUpload(ctx context.Context, assetID string, opts ...CallOption) (Object, error) {
+	return c.call(ctx, &callSpec{id: "completeCommunityVideoUpload", method: "POST", path: "/community/videos/{asset_id}/complete", pathParams: map[string]string{"asset_id": assetID}, tokenTypes: []TokenType{TokenUser, TokenTenant}}, opts)
+}
+
+// GetCommunityVideo calls GET /community/videos/{asset_id}: Transcoding status (only for videos this app uploaded for this person)
+//
+// Tokens: user / tenant; scopes: community:post.
+func (c *Client) GetCommunityVideo(ctx context.Context, assetID string, opts ...CallOption) (Object, error) {
+	return c.call(ctx, &callSpec{id: "getCommunityVideo", method: "GET", path: "/community/videos/{asset_id}", pathParams: map[string]string{"asset_id": assetID}, tokenTypes: []TokenType{TokenUser, TokenTenant}}, opts)
+}
+
+// ListCommunityPosts calls GET /community/posts: Posts this app made in this person's name (the person's own posts and other apps' posts are not visible)
+//
+// Tokens: user / tenant; scopes: community:post.
+// Query: page_size, page_token.
+func (c *Client) ListCommunityPosts(ctx context.Context, query Params, opts ...CallOption) (Object, error) {
+	return c.call(ctx, &callSpec{id: "listCommunityPosts", method: "GET", path: "/community/posts", query: query, tokenTypes: []TokenType{TokenUser, TokenTenant}}, opts)
+}
+
+// ListCommunityPostsAll yields every item of ListCommunityPosts, page after page (page_size 100 unless query sets it).
+func (c *Client) ListCommunityPostsAll(ctx context.Context, query Params, opts ...CallOption) iter.Seq2[Object, error] {
+	return c.iterate(ctx, &callSpec{id: "listCommunityPosts", method: "GET", path: "/community/posts", query: query, tokenTypes: []TokenType{TokenUser, TokenTenant}}, opts)
+}
+
+// CreateCommunityPost calls POST /community/posts: Publish a public post in this person's name (text, up to 9 images or 1 video, up to 10 topics)
+//
+// Tokens: user / tenant; scopes: community:post.
+func (c *Client) CreateCommunityPost(ctx context.Context, body any, opts ...CallOption) (Object, error) {
+	return c.call(ctx, &callSpec{id: "createCommunityPost", method: "POST", path: "/community/posts", body: body, tokenTypes: []TokenType{TokenUser, TokenTenant}}, opts)
+}
+
+// GetCommunityPost calls GET /community/posts/{post_id}: The status of one post (only posts this app made; anything else is 404)
+//
+// Tokens: user / tenant; scopes: community:post.
+func (c *Client) GetCommunityPost(ctx context.Context, postID string, opts ...CallOption) (Object, error) {
+	return c.call(ctx, &callSpec{id: "getCommunityPost", method: "GET", path: "/community/posts/{post_id}", pathParams: map[string]string{"post_id": postID}, tokenTypes: []TokenType{TokenUser, TokenTenant}}, opts)
+}
+
+// DeleteCommunityPost calls DELETE /community/posts/{post_id}: Delete a post (only posts this app made; anything else is 404)
+//
+// Tokens: user / tenant; scopes: community:post.
+func (c *Client) DeleteCommunityPost(ctx context.Context, postID string, opts ...CallOption) (Object, error) {
+	return c.call(ctx, &callSpec{id: "deleteCommunityPost", method: "DELETE", path: "/community/posts/{post_id}", pathParams: map[string]string{"post_id": postID}, tokenTypes: []TokenType{TokenUser, TokenTenant}}, opts)
+}
+
+// ListCommunityCategories calls GET /community/categories: Categories a post can be filed under (those enabled in this region)
+//
+// Tokens: user / tenant; scopes: community:post.
+func (c *Client) ListCommunityCategories(ctx context.Context, opts ...CallOption) (Object, error) {
+	return c.call(ctx, &callSpec{id: "listCommunityCategories", method: "GET", path: "/community/categories", tokenTypes: []TokenType{TokenUser, TokenTenant}}, opts)
+}
+
+// GetMySchedule calls GET /me/schedule: This person's timetable: their sessions, the events they signed up for, confirmed trial lessons and exams (for calendar apps; read-only)
+//
+// Tokens: user; scopes: me:schedule:readonly.
+// Query: from (required), to (required), page_size, page_token.
+func (c *Client) GetMySchedule(ctx context.Context, query Params, opts ...CallOption) (Object, error) {
+	return c.call(ctx, &callSpec{id: "getMySchedule", method: "GET", path: "/me/schedule", query: query, tokenTypes: []TokenType{TokenUser}}, opts)
+}
+
+// GetMyScheduleAll yields every item of GetMySchedule, page after page (page_size 100 unless query sets it; query must still carry from, to).
+func (c *Client) GetMyScheduleAll(ctx context.Context, query Params, opts ...CallOption) iter.Seq2[Object, error] {
+	return c.iterate(ctx, &callSpec{id: "getMySchedule", method: "GET", path: "/me/schedule", query: query, tokenTypes: []TokenType{TokenUser}}, opts)
+}
+
+// ListMyCourses calls GET /me/courses: The courses this person is studying and their progress (lessons completed, last studied; level and goals belong to the gold-only profile and are not here)
+//
+// Tokens: user; scopes: me:learning:readonly.
+// Query: page_size, page_token.
+func (c *Client) ListMyCourses(ctx context.Context, query Params, opts ...CallOption) (Object, error) {
+	return c.call(ctx, &callSpec{id: "listMyCourses", method: "GET", path: "/me/courses", query: query, tokenTypes: []TokenType{TokenUser}}, opts)
+}
+
+// ListMyCoursesAll yields every item of ListMyCourses, page after page (page_size 100 unless query sets it).
+func (c *Client) ListMyCoursesAll(ctx context.Context, query Params, opts ...CallOption) iter.Seq2[Object, error] {
+	return c.iterate(ctx, &callSpec{id: "listMyCourses", method: "GET", path: "/me/courses", query: query, tokenTypes: []TokenType{TokenUser}}, opts)
+}
+
+// ListMyWords calls GET /me/words: This person's word bank: words, pinyin, review state (no meanings, and review records cannot be changed)
+//
+// Tokens: user; scopes: me:words:readonly, me:words.
+// Query: page_size, page_token.
+func (c *Client) ListMyWords(ctx context.Context, query Params, opts ...CallOption) (Object, error) {
+	return c.call(ctx, &callSpec{id: "listMyWords", method: "GET", path: "/me/words", query: query, tokenTypes: []TokenType{TokenUser}}, opts)
+}
+
+// ListMyWordsAll yields every item of ListMyWords, page after page (page_size 100 unless query sets it).
+func (c *Client) ListMyWordsAll(ctx context.Context, query Params, opts ...CallOption) iter.Seq2[Object, error] {
+	return c.iterate(ctx, &callSpec{id: "listMyWords", method: "GET", path: "/me/words", query: query, tokenTypes: []TokenType{TokenUser}}, opts)
+}
+
+// AddMyWord calls POST /me/words: Add a word to this person's word bank (unchanged if it is already there; its source is recorded as this app)
+//
+// Tokens: user; scopes: me:words.
+func (c *Client) AddMyWord(ctx context.Context, body any, opts ...CallOption) (Object, error) {
+	return c.call(ctx, &callSpec{id: "addMyWord", method: "POST", path: "/me/words", body: body, tokenTypes: []TokenType{TokenUser}}, opts)
+}
+
+// ListClassExams calls GET /classes/{class_id}/exams: A class's exams (tenant tokens only, own institution)
+//
+// Tokens: tenant; scopes: grade:readonly.
+// Query: page_size, page_token.
+func (c *Client) ListClassExams(ctx context.Context, classID string, query Params, opts ...CallOption) (Object, error) {
+	return c.call(ctx, &callSpec{id: "listClassExams", method: "GET", path: "/classes/{class_id}/exams", pathParams: map[string]string{"class_id": classID}, query: query, tokenTypes: []TokenType{TokenTenant}}, opts)
+}
+
+// ListClassExamsAll yields every item of ListClassExams, page after page (page_size 100 unless query sets it).
+func (c *Client) ListClassExamsAll(ctx context.Context, classID string, query Params, opts ...CallOption) iter.Seq2[Object, error] {
+	return c.iterate(ctx, &callSpec{id: "listClassExams", method: "GET", path: "/classes/{class_id}/exams", pathParams: map[string]string{"class_id": classID}, query: query, tokenTypes: []TokenType{TokenTenant}}, opts)
+}
+
+// ListClassExamResults calls GET /classes/{class_id}/exams/{exam_id}/results: Each learner's result in one exam (scores only once released; tenant tokens only, own institution)
+//
+// Tokens: tenant; scopes: grade:readonly.
+// Query: page_size, page_token.
+func (c *Client) ListClassExamResults(ctx context.Context, classID string, examID string, query Params, opts ...CallOption) (Object, error) {
+	return c.call(ctx, &callSpec{id: "listClassExamResults", method: "GET", path: "/classes/{class_id}/exams/{exam_id}/results", pathParams: map[string]string{"class_id": classID, "exam_id": examID}, query: query, tokenTypes: []TokenType{TokenTenant}}, opts)
+}
+
+// ListClassExamResultsAll yields every item of ListClassExamResults, page after page (page_size 100 unless query sets it).
+func (c *Client) ListClassExamResultsAll(ctx context.Context, classID string, examID string, query Params, opts ...CallOption) iter.Seq2[Object, error] {
+	return c.iterate(ctx, &callSpec{id: "listClassExamResults", method: "GET", path: "/classes/{class_id}/exams/{exam_id}/results", pathParams: map[string]string{"class_id": classID, "exam_id": examID}, query: query, tokenTypes: []TokenType{TokenTenant}}, opts)
 }

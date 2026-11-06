@@ -14,6 +14,8 @@ const (
 	CodeTimeout          = "TIMEOUT"
 	CodeInvalidSignature = "INVALID_SIGNATURE"
 	CodeInvalidPayload   = "INVALID_PAYLOAD"
+	// CodeUploadFailed: the storage refused an upload's PUT (Status is its HTTP status).
+	CodeUploadFailed = "UPLOAD_FAILED"
 )
 
 // Error is an error answer of the open API ({"error": {"code", "message", "request_id", "details"}}),
@@ -63,6 +65,13 @@ func (e *Error) Scope() string {
 func (e *Error) NeverAsk() bool {
 	b, _ := e.Details["never_ask"].(bool)
 	return b
+}
+
+// ConsentURL is where the person agrees to show their name on posts (409 consent_required): send them
+// there, an app cannot agree for them.
+func (e *Error) ConsentURL() string {
+	s, _ := e.Details["consent_url"].(string)
+	return s
 }
 
 // IsScopeError reports a refused, not yet asked or undeclared scope (403): degrade gracefully.

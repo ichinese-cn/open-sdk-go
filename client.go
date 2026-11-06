@@ -226,6 +226,9 @@ type callSpec struct {
 	query      Params
 	body       any
 	tokenTypes []TokenType
+	// idempotent retries a POST like a GET (one the server makes idempotent: a post with its uuid,
+	// completing an upload).
+	idempotent bool
 }
 
 func (c *Client) call(ctx context.Context, spec *callSpec, opts []CallOption) (Object, error) {
@@ -486,7 +489,8 @@ func (c *Client) send(ctx context.Context, method, path string, query Params, bo
 	}
 	u := c.url(path, query)
 	idempotent := method == http.MethodGet || method == http.MethodPut || method == http.MethodDelete ||
-		(method == http.MethodPost && retryPost && auth == nil)
+		(method == http.MethodPost && retryPost && auth == nil) ||
+		(auth != nil && auth.spec.idempotent)
 	refreshed := false
 	for attempt := 0; ; attempt++ {
 		header := http.Header{}
