@@ -3,7 +3,7 @@
 package opensdk
 
 // Version is the SDK's version (it follows the open API's).
-const Version = "1.0.0-rc.3"
+const Version = "1.0.0-rc.4"
 
 // DefaultBaseURL is the open API's address from the release configuration (sdks/release.json);
 // WithBaseURL overrides it.
