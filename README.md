@@ -1,6 +1,6 @@
 # iChinese Open Platform SDK for Go
 
-> **Prerelease 1.0.0-rc.4.** 这是预发布版，开放平台还没有正式开放，SDK 的默认地址可能连不上。This is a prerelease: the open platform is not open to the public yet, so the SDK's default address may not answer.
+> **Prerelease 1.0.0-rc.5.** 这是预发布版，开放平台还没有正式开放，SDK 的默认地址可能连不上。This is a prerelease: the open platform is not open to the public yet, so the SDK's default address may not answer.
 
 爱中文开放平台的 Go 服务端 SDK：开放接口（`/open-apis/v1`）的每个接口都是一个方法（由契约生成），外加取应用令牌和机构令牌并在过期前续期、限流和服务端错误的退避重试、分页迭代、带类型的错误、网页免登换码、事件推送验签解密。只依赖 Go 标准库。
 
@@ -256,6 +256,18 @@ if e, ok := opensdk.AsError(err); ok && e.IsScopeError() {
 go vet ./... && go test ./...
 ICH_OPEN_IT=/path/to/fixture.json go test -run Integration -v ./...   # against a running environment
 ```
+
+## Phone number and email scopes
+
+Declare `phone` and/or `email` in the developer console and release the app configuration.
+Each user decides on each scope separately. The backend's `getUserInfo` (Python: `get_user_info`,
+Go: `GetUserInfo`) returns `phone_number` (E.164) and/or `email` only for scopes both declared
+and granted, and only for currently verified, bound identifiers. Otherwise the field is absent,
+including after revocation. Neither scope requires `profile`.
+
+For the web JS SDK's browser fallback, include the declared scopes in `config({ appId, scopes: ['phone', 'email'] })`.
+In a container the consent sheet uses the app's declared scopes. Exchange the code and call the user-info
+API on your backend; keep the user token there.
 
 ## License
 
