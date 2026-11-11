@@ -698,3 +698,30 @@ func (c *Client) ListClassExamResults(ctx context.Context, classID string, examI
 func (c *Client) ListClassExamResultsAll(ctx context.Context, classID string, examID string, query Params, opts ...CallOption) iter.Seq2[Object, error] {
 	return c.iterate(ctx, &callSpec{id: "listClassExamResults", method: "GET", path: "/classes/{class_id}/exams/{exam_id}/results", pathParams: map[string]string{"class_id": classID, "exam_id": examID}, query: query, tokenTypes: []TokenType{TokenTenant}}, opts)
 }
+
+// ListGrayAvatarFrames calls GET /gray/avatar-frames: List assignable avatar frames
+//
+// Tokens: app.
+// Query: page_size, page_token.
+func (c *Client) ListGrayAvatarFrames(ctx context.Context, query Params, opts ...CallOption) (Object, error) {
+	return c.call(ctx, &callSpec{id: "listGrayAvatarFrames", method: "GET", path: "/gray/avatar-frames", query: query, tokenTypes: []TokenType{TokenApp}}, opts)
+}
+
+// ListGrayAvatarFramesAll yields every item of ListGrayAvatarFrames, page after page (page_size 100 unless query sets it).
+func (c *Client) ListGrayAvatarFramesAll(ctx context.Context, query Params, opts ...CallOption) iter.Seq2[Object, error] {
+	return c.iterate(ctx, &callSpec{id: "listGrayAvatarFrames", method: "GET", path: "/gray/avatar-frames", query: query, tokenTypes: []TokenType{TokenApp}}, opts)
+}
+
+// AssignGrayAvatarFrame calls POST /gray/avatar-frame-assignments: Temporarily set an avatar frame for any platform user
+//
+// Tokens: app.
+func (c *Client) AssignGrayAvatarFrame(ctx context.Context, body any, opts ...CallOption) (Object, error) {
+	return c.call(ctx, &callSpec{id: "assignGrayAvatarFrame", method: "POST", path: "/gray/avatar-frame-assignments", body: body, tokenTypes: []TokenType{TokenApp}}, opts)
+}
+
+// GetGrayCommunityPostCounts calls GET /gray/community/post-counts: Count posts across all regions
+//
+// Tokens: app.
+func (c *Client) GetGrayCommunityPostCounts(ctx context.Context, opts ...CallOption) (Object, error) {
+	return c.call(ctx, &callSpec{id: "getGrayCommunityPostCounts", method: "GET", path: "/gray/community/post-counts", tokenTypes: []TokenType{TokenApp}}, opts)
+}

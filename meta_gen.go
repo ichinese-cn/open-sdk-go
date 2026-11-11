@@ -3,7 +3,7 @@
 package opensdk
 
 // Version is the SDK's version (it follows the open API's).
-const Version = "1.0.0-rc.5"
+const Version = "1.0.0-rc.6"
 
 // DefaultBaseURL is the open API's address from the release configuration (sdks/release.json);
 // WithBaseURL overrides it.
@@ -93,6 +93,9 @@ var ErrorReasons = []string{
 	"not_installed",
 	"not_available",
 	"scope_denied",
+	"gray_api_denied",
+	"frame_assignment_overlap",
+	"idempotency_conflict",
 	"scope_pending",
 	"scope_not_declared",
 	"gold_only",
@@ -206,6 +209,9 @@ var OperationTokens = func() map[string][]TokenType {
 	m["addMyWord"] = []TokenType{TokenUser}
 	m["listClassExams"] = []TokenType{TokenTenant}
 	m["listClassExamResults"] = []TokenType{TokenTenant}
+	m["listGrayAvatarFrames"] = []TokenType{TokenApp}
+	m["assignGrayAvatarFrame"] = []TokenType{TokenApp}
+	m["getGrayCommunityPostCounts"] = []TokenType{TokenApp}
 	return m
 }()
 
@@ -421,6 +427,15 @@ const ReasonNotAvailable = "not_available"
 
 // ReasonScopeDenied is the error reason scope_denied.
 const ReasonScopeDenied = "scope_denied"
+
+// ReasonGrayApiDenied is the error reason gray_api_denied.
+const ReasonGrayApiDenied = "gray_api_denied"
+
+// ReasonFrameAssignmentOverlap is the error reason frame_assignment_overlap.
+const ReasonFrameAssignmentOverlap = "frame_assignment_overlap"
+
+// ReasonIdempotencyConflict is the error reason idempotency_conflict.
+const ReasonIdempotencyConflict = "idempotency_conflict"
 
 // ReasonScopePending is the error reason scope_pending.
 const ReasonScopePending = "scope_pending"
