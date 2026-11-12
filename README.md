@@ -1,6 +1,6 @@
 # iChinese Open Platform SDK for Go
 
-> **Prerelease 1.0.0-rc.6.** 这是预发布版，开放平台还没有正式开放，SDK 的默认地址可能连不上。This is a prerelease: the open platform is not open to the public yet, so the SDK's default address may not answer.
+> **Prerelease 1.0.0-rc.7.** 这是预发布版，开放平台还没有正式开放，SDK 的默认地址可能连不上。This is a prerelease: the open platform is not open to the public yet, so the SDK's default address may not answer.
 
 爱中文开放平台的 Go 服务端 SDK：开放接口（`/open-apis/v1`）的每个接口都是一个方法（由契约生成），外加取应用令牌和机构令牌并在过期前续期、限流和服务端错误的退避重试、分页迭代、带类型的错误、网页免登换码、事件推送验签解密。只依赖 Go 标准库。
 

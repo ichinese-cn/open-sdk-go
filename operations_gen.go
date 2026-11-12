@@ -719,9 +719,10 @@ func (c *Client) AssignGrayAvatarFrame(ctx context.Context, body any, opts ...Ca
 	return c.call(ctx, &callSpec{id: "assignGrayAvatarFrame", method: "POST", path: "/gray/avatar-frame-assignments", body: body, tokenTypes: []TokenType{TokenApp}}, opts)
 }
 
-// GetGrayCommunityPostCounts calls GET /gray/community/post-counts: Count posts across all regions
+// GetGrayCommunityPostCounts calls GET /gray/community/post-counts: Count posts by topic across all five regions
 //
 // Tokens: app.
-func (c *Client) GetGrayCommunityPostCounts(ctx context.Context, opts ...CallOption) (Object, error) {
-	return c.call(ctx, &callSpec{id: "getGrayCommunityPostCounts", method: "GET", path: "/gray/community/post-counts", tokenTypes: []TokenType{TokenApp}}, opts)
+// Query: topic.
+func (c *Client) GetGrayCommunityPostCounts(ctx context.Context, query Params, opts ...CallOption) (Object, error) {
+	return c.call(ctx, &callSpec{id: "getGrayCommunityPostCounts", method: "GET", path: "/gray/community/post-counts", query: query, tokenTypes: []TokenType{TokenApp}}, opts)
 }
